@@ -27,6 +27,14 @@ does not generate trades, predict price, or promise performance.
 The script intentionally raises a runtime error when the selected higher
 timeframe is not above the chart timeframe.
 
+## Request a bounded scope check
+
+If you need help with an authorized Pine Script or TradingView timing problem,
+[open a scope request](https://github.com/arnjesix/stratcorealpha-pine-portfolio/issues/new?template=scope-request.md).
+Describe expected behavior and acceptance examples only. Do not post private
+source code, credentials, broker tokens or proprietary strategy rules in a
+public issue.
+
 ## Engineering boundary
 
 The confirmed series uses the previous higher-timeframe bar together with
@@ -41,4 +49,3 @@ only.
 
 Only buyer-owned, authorized, or public source is accepted for modification.
 No decompilation, hidden-source extraction, or profitability guarantees.
-
