@@ -1,0 +1,78 @@
+// This Pine Script code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// Copyright (c) StratCoreAlpha
+
+//@version=6
+indicator("MTF Confirmation Timing Inspector [StratCoreAlpha]", overlay = true)
+
+string higherTimeframe = input.timeframe("240", "Higher timeframe")
+bool showDevelopingValue = input.bool(true, "Show developing HTF close")
+bool shadeDevelopingBars = input.bool(true, "Shade bars while HTF candle develops")
+bool showStateTable = input.bool(true, "Show state table")
+
+if timeframe.in_seconds(higherTimeframe) <= timeframe.in_seconds()
+    runtime.error("Choose a higher timeframe than the chart timeframe.")
+
+// Confirmed value pattern: [1] requests the previous HTF bar while
+// lookahead_on makes that already-closed value available from the first bar of
+// the new HTF interval. This is the value to use for deterministic decisions.
+float confirmedHtfClose = request.security(
+     syminfo.tickerid,
+     higherTimeframe,
+     close[1],
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_on)
+
+// Diagnostic only. On the realtime bar this value may change until the HTF
+// candle closes, so it must not be confused with confirmed decision data.
+float developingHtfClose = request.security(
+     syminfo.tickerid,
+     higherTimeframe,
+     close,
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off)
+
+bool newHtfInterval = timeframe.change(higherTimeframe)
+int chartBarsIntoInterval = nz(ta.barssince(newHtfInterval), 0)
+
+plot(
+     confirmedHtfClose,
+     title = "Last confirmed HTF close",
+     color = color.new(color.teal, 0),
+     linewidth = 2,
+     style = plot.style_stepline)
+
+plot(
+     showDevelopingValue ? developingHtfClose : na,
+     title = "Developing HTF close (diagnostic only)",
+     color = color.new(color.orange, 15),
+     linewidth = 1,
+     style = plot.style_linebr)
+
+bgcolor(
+     shadeDevelopingBars and not newHtfInterval ? color.new(color.orange, 94) : na,
+     title = "Developing HTF interval")
+
+alertcondition(
+     newHtfInterval,
+     title = "Previous HTF candle confirmed",
+     message = "A new higher-timeframe interval started. The previous HTF candle is now confirmed.")
+
+var table stateTable = table.new(position.top_right, 2, 5, border_width = 1)
+
+if barstate.islast and showStateTable
+    string intervalState = newHtfInterval ? "New interval" : "Developing"
+    color stateColor = newHtfInterval ? color.teal : color.orange
+
+    table.cell(stateTable, 0, 0, "MTF timing", text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(stateTable, 1, 0, higherTimeframe, text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(stateTable, 0, 1, "State")
+    table.cell(stateTable, 1, 1, intervalState, text_color = stateColor)
+    table.cell(stateTable, 0, 2, "Confirmed close")
+    table.cell(stateTable, 1, 2, str.tostring(confirmedHtfClose, format.mintick), text_color = color.teal)
+    table.cell(stateTable, 0, 3, "Developing close")
+    table.cell(stateTable, 1, 3, str.tostring(developingHtfClose, format.mintick), text_color = color.orange)
+    table.cell(stateTable, 0, 4, "Chart bars in interval")
+    table.cell(stateTable, 1, 4, str.tostring(chartBarsIntoInterval))
+
+if barstate.islast and not showStateTable
+    table.clear(stateTable, 0, 0, 1, 4)
