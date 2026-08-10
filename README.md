@@ -2,6 +2,29 @@
 
 Public, source-level proof for deterministic TradingView engineering.
 
+## Webhook Idempotency Fixture
+
+`webhook_idempotency_fixture.mjs` and its Node test file demonstrate the
+receiver-side boundary behind the synthetic duplicated-webhook report. The
+fixture reserves a stable event ID before a side effect, returns a successful
+duplicate response for an identical retry, rejects an ID reused with a changed
+payload, holds concurrent retries and fails closed for an uncertain downstream
+error until it can be reconciled.
+
+Run the seven deterministic cases with:
+
+```bash
+node --test webhook_idempotency_fixture.test.mjs
+```
+
+The store is deliberately in-memory so the example stays dependency-free and
+auditable. It is not production persistence and does not claim crash recovery,
+distributed locking, exchange acceptance or live trading safety. A real
+receiver needs a durable atomic reservation in its own infrastructure.
+
+See the clearly labelled synthetic report:
+<https://stratcorealpha.com/diagnostic/sample-webhook-report>.
+
 ## MTF Confirmation Timing Inspector
 
 `mtf_confirmation_timing_inspector.pine` is a Pine Script v6 diagnostic that
