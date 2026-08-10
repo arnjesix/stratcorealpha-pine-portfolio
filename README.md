@@ -91,6 +91,31 @@ webhook or TradersPost endpoint was configured.
    contract events.
 6. Use only an owned TradersPost paper/test route if transport is later tested.
 
+## PineConnector Signal Contract Inspector
+
+`pineconnector_signal_contract_inspector.pine` is a Pine Script v6 proof for
+the current PineConnector explicit market-order message format. It generates a
+masked, inspectable contract with one `vol_lots=`, `sl_pips=` and `tp_pips=`
+field, completed-bar timing, one-event-per-bar suppression and an optional
+broker-symbol override.
+
+Alert transport is disabled by default. A valid owned 13- or 14-digit License
+ID is required before `alert()` can run, and the on-chart table always masks it
+as `LICENSE_ID`. The public source contains no webhook URL, secret or account
+data and makes no live endpoint or profitability claim.
+
+The explicit syntax is documented for market orders and PineConnector MT5 EA
+v3.53.2 or later. Older EAs, pending orders and broker-specific execution are
+outside this proof.
+
+### Quick validation
+
+1. Compile with alerts disabled and leave the License ID blank.
+2. Reach a completed EMA crossover in Bar Replay.
+3. Verify the masked message has exactly one volume, stop and target field.
+4. Reload and confirm markers remain stable with no duplicate event per bar.
+5. Use an owned trial or paper route only if transport is later tested.
+
 ## Request a bounded scope check
 
 If you need help with an authorized Pine Script or TradingView timing problem,

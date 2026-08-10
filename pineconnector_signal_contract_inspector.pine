@@ -1,0 +1,90 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © StratCoreAlpha
+
+//@version=6
+indicator("PineConnector Signal Contract Inspector [StratCoreAlpha]", overlay = true)
+
+int fastLength = input.int(9, "Fast EMA", minval = 1)
+int slowLength = input.int(21, "Slow EMA", minval = 2)
+string licenseId = input.string("", "Owned PineConnector License ID")
+string symbolOverride = input.string("", "Explicit broker symbol override")
+float fixedLots = input.float(0.01, "Fixed lots", minval = 0.01, step = 0.01)
+float stopPips = input.float(20.0, "Stop distance in pips", minval = 0.1, step = 0.1)
+float targetPips = input.float(40.0, "Target distance in pips", minval = 0.1, step = 0.1)
+bool requireClosedBar = input.bool(true, "Require completed chart bar")
+bool enableAlerts = input.bool(false, "Enable alert() calls")
+bool showContractTable = input.bool(true, "Show masked contract inspector")
+
+if fastLength >= slowLength
+    runtime.error("Fast EMA must be shorter than slow EMA.")
+
+string payloadSymbol = str.length(symbolOverride) > 0 ? symbolOverride : syminfo.ticker
+bool unsafeSymbol = str.contains(payloadSymbol, ",") or str.contains(payloadSymbol, "\n") or str.contains(payloadSymbol, "\r")
+bool licenseLengthValid = str.length(licenseId) == 13 or str.length(licenseId) == 14
+bool licenseDigitsValid = licenseLengthValid and not na(str.tonumber(licenseId))
+
+if unsafeSymbol
+    runtime.error("The symbol cannot contain commas or line breaks.")
+
+if enableAlerts and not licenseDigitsValid
+    runtime.error("Enter an owned 13- or 14-digit PineConnector License ID before enabling alerts.")
+
+float fastEma = ta.ema(close, fastLength)
+float slowEma = ta.ema(close, slowLength)
+bool timingGate = not requireClosedBar or barstate.isconfirmed
+bool buyEvent = timingGate and ta.crossover(fastEma, slowEma)
+bool sellEvent = timingGate and ta.crossunder(fastEma, slowEma)
+
+makeMessage(string prefix, string action) =>
+    prefix + "," + action + "," + payloadSymbol +
+     ",vol_lots=" + str.tostring(fixedLots) +
+     ",sl_pips=" + str.tostring(stopPips) +
+     ",tp_pips=" + str.tostring(targetPips) +
+     ",comment=SCA_QA"
+
+string buyMessage = makeMessage(licenseId, "buy")
+string sellMessage = makeMessage(licenseId, "sell")
+string maskedBuyMessage = makeMessage("LICENSE_ID", "buy")
+string maskedSellMessage = makeMessage("LICENSE_ID", "sell")
+
+var int lastEventBar = na
+var string lastAction = "none"
+var string lastMaskedMessage = "Waiting for a completed crossover"
+
+bool newEventOnBar = (buyEvent or sellEvent) and (na(lastEventBar) or lastEventBar != bar_index)
+
+if newEventOnBar
+    lastEventBar := bar_index
+    lastAction := buyEvent ? "buy" : "sell"
+    lastMaskedMessage := buyEvent ? maskedBuyMessage : maskedSellMessage
+    if enableAlerts
+        alert(buyEvent ? buyMessage : sellMessage, alert.freq_once_per_bar_close)
+
+plot(fastEma, "Fast EMA", color = color.teal, linewidth = 2)
+plot(slowEma, "Slow EMA", color = color.orange, linewidth = 2)
+plotshape(newEventOnBar and buyEvent, "Buy contract event", shape.triangleup, location.belowbar, color.green, size = size.tiny, text = "B")
+plotshape(newEventOnBar and sellEvent, "Sell contract event", shape.triangledown, location.abovebar, color.red, size = size.tiny, text = "S")
+
+alertcondition(buyEvent, "PineConnector buy contract event", "A completed-bar buy contract event is ready. Use Any alert() function call for the dynamic message.")
+alertcondition(sellEvent, "PineConnector sell contract event", "A completed-bar sell contract event is ready. Use Any alert() function call for the dynamic message.")
+
+var table inspector = table.new(position.top_right, 2, 7, border_width = 1)
+
+if barstate.islast and showContractTable
+    table.cell(inspector, 0, 0, "PineConnector contract", text_color = color.white, bgcolor = color.new(color.blue, 35))
+    table.cell(inspector, 1, 0, "Masked inspector", text_color = color.white, bgcolor = color.new(color.blue, 35))
+    table.cell(inspector, 0, 1, "Symbol")
+    table.cell(inspector, 1, 1, payloadSymbol)
+    table.cell(inspector, 0, 2, "Last action")
+    table.cell(inspector, 1, 2, lastAction)
+    table.cell(inspector, 0, 3, "Explicit volume")
+    table.cell(inspector, 1, 3, str.tostring(fixedLots) + " lots")
+    table.cell(inspector, 0, 4, "SL / TP")
+    table.cell(inspector, 1, 4, str.tostring(stopPips) + " / " + str.tostring(targetPips) + " pips")
+    table.cell(inspector, 0, 5, "alert() enabled")
+    table.cell(inspector, 1, 5, enableAlerts ? "yes" : "no")
+    table.cell(inspector, 0, 6, "Last message")
+    table.cell(inspector, 1, 6, lastMaskedMessage, text_size = size.tiny)
+
+if barstate.islast and not showContractTable
+    table.clear(inspector, 0, 0, 1, 6)
