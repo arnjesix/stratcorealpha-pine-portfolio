@@ -27,6 +27,37 @@ does not generate trades, predict price, or promise performance.
 The script intentionally raises a runtime error when the selected higher
 timeframe is not above the chart timeframe.
 
+## Trend Stack Acceptance Inspector
+
+`trend_stack_acceptance_inspector.pine` is a Pine Script v6 reference for the
+small indicator briefs that combine chart overlays, an oscillator pane and
+state-change alerts. It provides:
+
+- chart-overlay EMA, SMA and built-in SuperTrend values;
+- RSI in a separate pane from the same script;
+- explicit bullish, bearish and neutral state definitions;
+- optional completed-bar gating; and
+- alerts only when the complete state changes, rather than on every bar that
+  remains inside the same state.
+
+The default bullish state requires `close > EMA > SMA`, bullish SuperTrend and
+RSI at or above 50. The bearish state is the inverse. These are transparent
+acceptance rules, not a recommendation or a claim of trading edge.
+
+### Quick validation
+
+1. Paste the source into Pine Editor and add it to a chart.
+2. Confirm that EMA, SMA and SuperTrend render on the price chart while RSI
+   renders in its own pane.
+3. Keep `Require completed chart bar` enabled and use Bar Replay.
+4. Verify that a `B` or `S` marker appears only on the first completed bar of a
+   newly aligned state.
+5. Reload the chart and confirm that historical states and markers are stable.
+6. Change one threshold so the stack is no longer aligned and confirm the
+   neutral alert becomes eligible only on the state transition.
+
+The script places no order, sizes no position and makes no profitability claim.
+
 ## Request a bounded scope check
 
 If you need help with an authorized Pine Script or TradingView timing problem,

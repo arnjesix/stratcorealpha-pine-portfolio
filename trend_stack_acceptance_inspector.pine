@@ -1,0 +1,105 @@
+// This Pine Script code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// Copyright (c) StratCoreAlpha
+
+//@version=6
+indicator("Trend Stack Acceptance Inspector [StratCoreAlpha]", overlay = false)
+
+int emaLength = input.int(20, "EMA length", minval = 1)
+int smaLength = input.int(50, "SMA length", minval = 1)
+int rsiLength = input.int(14, "RSI length", minval = 1)
+float bullishRsiFloor = input.float(50.0, "Bullish RSI floor", minval = 0.0, maxval = 100.0)
+float bearishRsiCeiling = input.float(50.0, "Bearish RSI ceiling", minval = 0.0, maxval = 100.0)
+int supertrendAtrLength = input.int(10, "SuperTrend ATR length", minval = 1)
+float supertrendFactor = input.float(3.0, "SuperTrend factor", minval = 0.1, step = 0.1)
+bool requireConfirmedBar = input.bool(true, "Require completed chart bar")
+bool showTransitionMarkers = input.bool(true, "Show state-transition markers")
+
+float emaValue = ta.ema(close, emaLength)
+float smaValue = ta.sma(close, smaLength)
+float rsiValue = ta.rsi(close, rsiLength)
+[supertrendValue, supertrendDirection] = ta.supertrend(supertrendFactor, supertrendAtrLength)
+
+bool inputsReady = not na(emaValue) and not na(smaValue) and not na(rsiValue) and not na(supertrendValue)
+bool decisionBar = not requireConfirmedBar or barstate.isconfirmed
+
+bool bullishConditions = inputsReady and close > emaValue and emaValue > smaValue and supertrendDirection < 0 and rsiValue >= bullishRsiFloor
+bool bearishConditions = inputsReady and close < emaValue and emaValue < smaValue and supertrendDirection > 0 and rsiValue <= bearishRsiCeiling
+
+int trendState = decisionBar and bullishConditions ? 1 : decisionBar and bearishConditions ? -1 : 0
+bool bullishTransition = trendState == 1 and nz(trendState[1]) != 1
+bool bearishTransition = trendState == -1 and nz(trendState[1]) != -1
+bool neutralTransition = trendState == 0 and nz(trendState[1]) != 0
+
+plot(
+     emaValue,
+     title = "EMA",
+     color = color.new(color.teal, 0),
+     linewidth = 2,
+     force_overlay = true)
+
+plot(
+     smaValue,
+     title = "SMA",
+     color = color.new(color.blue, 0),
+     linewidth = 2,
+     force_overlay = true)
+
+plot(
+     supertrendDirection < 0 ? supertrendValue : na,
+     title = "Bullish SuperTrend",
+     color = color.new(color.green, 0),
+     linewidth = 2,
+     style = plot.style_linebr,
+     force_overlay = true)
+
+plot(
+     supertrendDirection > 0 ? supertrendValue : na,
+     title = "Bearish SuperTrend",
+     color = color.new(color.red, 0),
+     linewidth = 2,
+     style = plot.style_linebr,
+     force_overlay = true)
+
+plotshape(
+     showTransitionMarkers and bullishTransition,
+     title = "Bullish state started",
+     style = shape.triangleup,
+     location = location.belowbar,
+     color = color.new(color.lime, 0),
+     size = size.tiny,
+     text = "B",
+     force_overlay = true)
+
+plotshape(
+     showTransitionMarkers and bearishTransition,
+     title = "Bearish state started",
+     style = shape.triangledown,
+     location = location.abovebar,
+     color = color.new(color.red, 0),
+     size = size.tiny,
+     text = "S",
+     force_overlay = true)
+
+plot(rsiValue, title = "RSI", color = color.new(color.purple, 0), linewidth = 2)
+hline(70.0, "RSI 70", color = color.new(color.gray, 55))
+hline(50.0, "RSI 50", color = color.new(color.gray, 70))
+hline(30.0, "RSI 30", color = color.new(color.gray, 55))
+
+bgcolor(
+     trendState == 1 ? color.new(color.green, 90) : trendState == -1 ? color.new(color.red, 90) : na,
+     title = "Confirmed trend state")
+
+alertcondition(
+     bullishTransition,
+     title = "Bullish trend stack confirmed",
+     message = "Bullish EMA/SMA/SuperTrend/RSI state started on the selected chart timeframe.")
+
+alertcondition(
+     bearishTransition,
+     title = "Bearish trend stack confirmed",
+     message = "Bearish EMA/SMA/SuperTrend/RSI state started on the selected chart timeframe.")
+
+alertcondition(
+     neutralTransition,
+     title = "Trend stack returned to neutral",
+     message = "The prior bullish or bearish trend stack is no longer fully aligned.")
