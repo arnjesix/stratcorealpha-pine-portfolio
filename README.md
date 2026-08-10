@@ -58,6 +58,39 @@ acceptance rules, not a recommendation or a claim of trading edge.
 
 The script places no order, sizes no position and makes no profitability claim.
 
+## TradersPost Webhook Contract Inspector
+
+`traderspost_webhook_contract_inspector.pine` is a Pine Script v6 proof for a
+bounded TradingView-to-TradersPost signal contract. A transparent EMA crossover
+creates deterministic buy/sell test events while the engineering proof covers:
+
+- required `ticker` and `action` fields;
+- explicit fixed quantity and quantity type;
+- completed-bar timing and one-event-per-bar suppression;
+- an inspectable event ID and JSON payload;
+- an optional explicit ticker override for symbol-mapping cases; and
+- disabled-by-default alert transmission with no bundled webhook URL.
+
+The field names follow TradersPost's public Signal Message Reference and
+TradingView integration documentation as checked on 2026-08-10. The source is
+not a strategy edge, does not place TradingView orders and makes no claim of a
+live endpoint acceptance test.
+
+The exact 84-line source compiled and was saved in the authenticated
+TradingView Pine Editor on 2026-08-10. Adding it to the chart was not tested
+because the Basic account had already reached its two-indicator limit. No alert,
+webhook or TradersPost endpoint was configured.
+
+### Quick validation
+
+1. Paste the source into Pine Editor and add it to a chart.
+2. Leave `Enable alert() calls` off.
+3. Use Bar Replay to reach a completed EMA crossover.
+4. Parse the table payload and verify its required fields and event ID.
+5. Reload and verify historical markers remain stable and no bar has duplicate
+   contract events.
+6. Use only an owned TradersPost paper/test route if transport is later tested.
+
 ## Request a bounded scope check
 
 If you need help with an authorized Pine Script or TradingView timing problem,

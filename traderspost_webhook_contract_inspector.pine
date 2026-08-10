@@ -1,0 +1,83 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © StratCoreAlpha
+
+//@version=6
+indicator("TradersPost Webhook Contract Inspector [StratCoreAlpha]", overlay = true)
+
+int fastLength = input.int(9, "Fast EMA", minval = 1)
+int slowLength = input.int(21, "Slow EMA", minval = 2)
+string tickerOverride = input.string("", "Explicit ticker override")
+float fixedQuantity = input.float(1.0, "Fixed quantity", minval = 0.00000001)
+bool requireClosedBar = input.bool(true, "Require completed chart bar")
+bool enableAlerts = input.bool(false, "Enable alert() calls")
+bool showPayloadTable = input.bool(true, "Show payload inspector")
+
+if fastLength >= slowLength
+    runtime.error("Fast EMA must be shorter than slow EMA.")
+
+if str.contains(tickerOverride, '"') or str.contains(tickerOverride, "\\")
+    runtime.error("Ticker override cannot contain quote or backslash characters.")
+
+float fastEma = ta.ema(close, fastLength)
+float slowEma = ta.ema(close, slowLength)
+bool timingGate = not requireClosedBar or barstate.isconfirmed
+bool buyEvent = timingGate and ta.crossover(fastEma, slowEma)
+bool sellEvent = timingGate and ta.crossunder(fastEma, slowEma)
+
+string payloadTicker = str.length(tickerOverride) > 0 ? tickerOverride : syminfo.ticker
+string eventId = payloadTicker + "-" + timeframe.period + "-" + str.tostring(time_close)
+string signalTime = str.format_time(time_close, "yyyy-MM-dd'T'HH:mm:ss'Z'", "UTC")
+
+makePayload(string action) =>
+    '{"ticker":"' + payloadTicker +
+     '","action":"' + action +
+     '","quantity":' + str.tostring(fixedQuantity) +
+     ',"quantityType":"fixed_quantity"' +
+     ',"price":' + str.tostring(close, format.mintick) +
+     ',"time":"' + signalTime + '"' +
+     ',"extras":{"source":"StratCoreAlpha contract inspector"' +
+     ',"eventId":"' + eventId +
+     '","barConfirmed":' + str.tostring(barstate.isconfirmed) + '}}'
+
+string buyPayload = makePayload("buy")
+string sellPayload = makePayload("sell")
+
+var int lastAlertBar = na
+var string lastAction = "none"
+var string lastPayload = "Waiting for a completed crossover"
+
+bool newEventOnBar = (buyEvent or sellEvent) and (na(lastAlertBar) or lastAlertBar != bar_index)
+
+if newEventOnBar
+    lastAlertBar := bar_index
+    lastAction := buyEvent ? "buy" : "sell"
+    lastPayload := buyEvent ? buyPayload : sellPayload
+    if enableAlerts
+        alert(lastPayload, alert.freq_once_per_bar_close)
+
+plot(fastEma, "Fast EMA", color = color.teal, linewidth = 2)
+plot(slowEma, "Slow EMA", color = color.orange, linewidth = 2)
+plotshape(newEventOnBar and buyEvent, "Buy contract event", shape.triangleup, location.belowbar, color.green, size = size.tiny, text = "B")
+plotshape(newEventOnBar and sellEvent, "Sell contract event", shape.triangledown, location.abovebar, color.red, size = size.tiny, text = "S")
+
+alertcondition(buyEvent, "TradersPost buy contract event", "A completed-bar buy contract event is ready. Use Any alert() function call for the dynamic JSON payload.")
+alertcondition(sellEvent, "TradersPost sell contract event", "A completed-bar sell contract event is ready. Use Any alert() function call for the dynamic JSON payload.")
+
+var table inspector = table.new(position.top_right, 2, 6, border_width = 1)
+
+if barstate.islast and showPayloadTable
+    table.cell(inspector, 0, 0, "Webhook contract", text_color = color.white, bgcolor = color.new(color.blue, 35))
+    table.cell(inspector, 1, 0, "Inspector only", text_color = color.white, bgcolor = color.new(color.blue, 35))
+    table.cell(inspector, 0, 1, "Ticker")
+    table.cell(inspector, 1, 1, payloadTicker)
+    table.cell(inspector, 0, 2, "Last action")
+    table.cell(inspector, 1, 2, lastAction)
+    table.cell(inspector, 0, 3, "Closed-bar gate")
+    table.cell(inspector, 1, 3, requireClosedBar ? "required" : "disabled")
+    table.cell(inspector, 0, 4, "alert() enabled")
+    table.cell(inspector, 1, 4, enableAlerts ? "yes" : "no")
+    table.cell(inspector, 0, 5, "Last payload")
+    table.cell(inspector, 1, 5, lastPayload, text_size = size.tiny)
+
+if barstate.islast and not showPayloadTable
+    table.clear(inspector, 0, 0, 1, 5)
