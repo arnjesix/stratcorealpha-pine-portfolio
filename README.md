@@ -76,8 +76,8 @@ TradingView integration documentation as checked on 2026-08-10. The source is
 not a strategy edge, does not place TradingView orders and makes no claim of a
 live endpoint acceptance test.
 
-The exact 84-line source compiled and was saved in the authenticated
-TradingView Pine Editor on 2026-08-10. Adding it to the chart was not tested
+The exact source compiled and was saved in the authenticated TradingView Pine
+Editor on 2026-08-10. Adding it to the chart was not tested
 because the Basic account had already reached its two-indicator limit. No alert,
 webhook or TradersPost endpoint was configured.
 
