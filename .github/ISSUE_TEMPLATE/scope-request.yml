@@ -1,0 +1,72 @@
+name: Public Pine scope request
+description: Request a non-confidential feasibility and scope check for authorized Pine Script or TradingView work.
+title: "Scope request: "
+labels:
+  - scope-request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue will be public. Do not include proprietary source code, credentials, webhook URLs, account data or private strategy rules. Build a private local brief first at https://stratcorealpha.com/tools/trading-bot-scope-builder and use https://stratcorealpha.com/diagnostic for confidential material.
+  - type: dropdown
+    id: work_type
+    attributes:
+      label: Work type
+      options:
+        - One reproducible Pine Script bug fix
+        - One bounded modification
+        - Indicator or alert from explicit rules
+        - Strategy conversion or backtest validation
+        - Authorized Pine to MQL4/MQL5 conversion
+        - Webhook or execution-contract diagnosis
+        - Specification or feasibility review
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Pine version, symbol and timeframe
+      placeholder: Pine v6, EURUSD, 15m with 1h confirmation
+    validations:
+      required: true
+  - type: dropdown
+    id: timing
+    attributes:
+      label: Required signal timing
+      options:
+        - Confirmed bar close only
+        - Intrabar or realtime updates
+        - Mixed or not yet decided
+    validations:
+      required: true
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current situation
+      description: Describe the current behaviour, error or authorized starting point without pasting confidential source.
+      placeholder: Existing editable source / written rules / reproducible symptom...
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected result and acceptance examples
+      description: State one testable outcome plus one should-happen and one should-not-happen example.
+    validations:
+      required: true
+  - type: input
+    id: budget
+    attributes:
+      label: Budget and preferred deadline
+      placeholder: EUR 100, within 5 days
+  - type: checkboxes
+    id: authorization
+    attributes:
+      label: Public-request confirmation
+      options:
+        - label: I have not included credentials, webhook URLs, proprietary source code or private strategy details.
+          required: true
+        - label: I own or am authorized to use any source code referenced by this request.
+          required: true
+        - label: I understand that engineering work does not guarantee profit, win rate, drawdown or a prop-firm result.
+          required: true
