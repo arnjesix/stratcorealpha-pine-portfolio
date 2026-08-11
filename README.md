@@ -2,28 +2,30 @@
 
 Public, source-level proof for deterministic TradingView engineering.
 
-## Webhook Idempotency Fixture
+## Partial Exit State Inspector
 
-`webhook_idempotency_fixture.mjs` and its Node test file demonstrate the
-receiver-side boundary behind the synthetic duplicated-webhook report. The
-fixture reserves a stable event ID before a side effect, returns a successful
-duplicate response for an identical retry, rejects an ID reused with a changed
-payload, holds concurrent retries and fails closed for an uncertain downstream
-error until it can be reconciled.
+`partial_exit_state_inspector.pine` is a Pine Script v6 diagnostic for a common
+alert-repair ambiguity: whether a percentage reduction refers to the initial
+position or to the quantity remaining when the event fires.
 
-Run the seven deterministic cases with:
+The default 50/33/25 sequence uses remaining-quantity semantics. Starting from
+100 test units it exits 50, then 16.5, then 8.375 and leaves 25.125 units. If
+the same percentages are switched to initial-quantity semantics, the script
+fails explicitly because the requested reductions total 108%.
 
-```bash
-node --test webhook_idempotency_fixture.test.mjs
-```
+The synthetic EMA cycle exists only to make three closed-bar events
+reproducible. Alert transport is disabled by default; the script places no
+orders and makes no performance claim. The exact source was saved without a
+compile error in the authenticated TradingView Pine Editor on 2026-08-12.
 
-The store is deliberately in-memory so the example stays dependency-free and
-auditable. It is not production persistence and does not claim crash recovery,
-distributed locking, exchange acceptance or live trading safety. A real
-receiver needs a durable atomic reservation in its own infrastructure.
+### Quick validation
 
-See the clearly labelled synthetic report:
-<https://stratcorealpha.com/diagnostic/sample-webhook-report>.
+1. Paste or open the source in Pine Editor with the default inputs.
+2. Confirm that each cycle resets to 100 simulated units.
+3. Verify that T1, T2 and T3 fire once after 3, 6 and 9 closed bars.
+4. Match every calculated exit and remaining quantity to the state table.
+5. Switch to `Initial quantity` and confirm the explicit 108% contract error.
+6. Keep `Enable alert() calls` off unless testing an owned alert route.
 
 ## MTF Confirmation Timing Inspector
 
@@ -80,6 +82,20 @@ acceptance rules, not a recommendation or a claim of trading edge.
    neutral alert becomes eligible only on the state transition.
 
 The script places no order, sizes no position and makes no profitability claim.
+
+## Secondary receiver reliability fixture
+
+`webhook_idempotency_fixture.mjs` and its Node test file remain available as
+secondary evidence for duplicate-event handling outside Pine. They are not a
+headline StratCoreAlpha offer. The dependency-free in-memory fixture is not
+production persistence and does not claim crash recovery, distributed locking,
+exchange acceptance or live-trading safety.
+
+Run its seven deterministic cases with:
+
+```bash
+node --test webhook_idempotency_fixture.test.mjs
+```
 
 ## TradersPost Webhook Contract Inspector
 

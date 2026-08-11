@@ -1,0 +1,113 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © StratCoreAlpha
+
+//@version=6
+indicator("Partial Exit State Inspector [StratCoreAlpha]", overlay = false)
+
+string quantityBasis = input.string(
+     "Remaining quantity",
+     "Percentage basis",
+     options = ["Remaining quantity", "Initial quantity"])
+float initialQuantity = input.float(100.0, "Initial test quantity", minval = 0.0001, step = 0.1)
+float tier1Percent = input.float(50.0, "Tier 1 percent", minval = 0.0, maxval = 100.0, step = 0.1)
+float tier2Percent = input.float(33.0, "Tier 2 percent", minval = 0.0, maxval = 100.0, step = 0.1)
+float tier3Percent = input.float(25.0, "Tier 3 percent", minval = 0.0, maxval = 100.0, step = 0.1)
+int tier1Delay = input.int(3, "Tier 1 delay in closed bars", minval = 1)
+int tier2Delay = input.int(6, "Tier 2 delay in closed bars", minval = 2)
+int tier3Delay = input.int(9, "Tier 3 delay in closed bars", minval = 3)
+bool enableAlertCalls = input.bool(false, "Enable alert() calls")
+bool showStateTable = input.bool(true, "Show state table")
+
+if not (tier1Delay < tier2Delay and tier2Delay < tier3Delay)
+    runtime.error("Tier delays must be strictly increasing.")
+
+if quantityBasis == "Initial quantity" and tier1Percent + tier2Percent + tier3Percent > 100.0
+    runtime.error("Initial-quantity percentages exceed 100%. Reduce the tiers or use remaining-quantity semantics.")
+
+float fastEma = ta.ema(close, 9)
+float slowEma = ta.ema(close, 21)
+bool longCycleStarts = barstate.isconfirmed and ta.crossover(fastEma, slowEma)
+bool shortCycleStarts = barstate.isconfirmed and ta.crossunder(fastEma, slowEma)
+
+var int cycleDirection = 0
+var int barsInCycle = 0
+var int nextTier = 0
+var float remainingQuantity = na
+var string lastContract = "No exit event yet"
+
+bool tier1Event = false
+bool tier2Event = false
+bool tier3Event = false
+float eventQuantity = na
+float eventPercent = na
+int eventTier = 0
+
+if longCycleStarts or shortCycleStarts
+    cycleDirection := longCycleStarts ? 1 : -1
+    barsInCycle := 0
+    nextTier := 1
+    remainingQuantity := initialQuantity
+    lastContract := longCycleStarts ? "LONG cycle armed" : "SHORT cycle armed"
+else if cycleDirection != 0 and barstate.isconfirmed
+    barsInCycle += 1
+
+bool tier1Due = nextTier == 1 and barsInCycle == tier1Delay
+bool tier2Due = nextTier == 2 and barsInCycle == tier2Delay
+bool tier3Due = nextTier == 3 and barsInCycle == tier3Delay
+
+if barstate.isconfirmed and cycleDirection != 0 and (tier1Due or tier2Due or tier3Due)
+    eventTier := nextTier
+    eventPercent := eventTier == 1 ? tier1Percent : eventTier == 2 ? tier2Percent : tier3Percent
+    float basisQuantity = quantityBasis == "Initial quantity" ? initialQuantity : remainingQuantity
+    eventQuantity := math.min(remainingQuantity, basisQuantity * eventPercent / 100.0)
+    remainingQuantity := math.max(0.0, remainingQuantity - eventQuantity)
+
+    tier1Event := eventTier == 1
+    tier2Event := eventTier == 2
+    tier3Event := eventTier == 3
+
+    string directionText = cycleDirection == 1 ? "long" : "short"
+    lastContract := "{\"event\":\"partial_exit\",\"direction\":\"" + directionText +
+         "\",\"tier\":" + str.tostring(eventTier) +
+         ",\"basis\":\"" + quantityBasis +
+         "\",\"percent\":" + str.tostring(eventPercent) +
+         ",\"quantity\":" + str.tostring(eventQuantity) +
+         ",\"remaining\":" + str.tostring(remainingQuantity) + "}"
+
+    if enableAlertCalls
+        alert(lastContract, alert.freq_once_per_bar_close)
+
+    nextTier := eventTier == 3 ? 0 : eventTier + 1
+
+plot(remainingQuantity, "Simulated remaining quantity", color = color.teal, linewidth = 2, style = plot.style_stepline)
+plot(initialQuantity, "Initial quantity", color = color.new(color.gray, 65))
+
+plotshape(tier1Event, "Tier 1 event", shape.circle, location.top, color = color.new(color.green, 0), text = "T1", textcolor = color.white)
+plotshape(tier2Event, "Tier 2 event", shape.circle, location.top, color = color.new(color.orange, 0), text = "T2", textcolor = color.white)
+plotshape(tier3Event, "Tier 3 event", shape.circle, location.top, color = color.new(color.red, 0), text = "T3", textcolor = color.white)
+
+alertcondition(tier1Event, "Tier 1 partial exit", "Tier 1 partial-exit state occurred on a confirmed bar.")
+alertcondition(tier2Event, "Tier 2 partial exit", "Tier 2 partial-exit state occurred on a confirmed bar.")
+alertcondition(tier3Event, "Tier 3 partial exit", "Tier 3 partial-exit state occurred on a confirmed bar.")
+
+var table stateTable = table.new(position.top_right, 2, 7, border_width = 1)
+
+if barstate.islast and showStateTable
+    string directionLabel = cycleDirection == 1 ? "LONG" : cycleDirection == -1 ? "SHORT" : "IDLE"
+    table.cell(stateTable, 0, 0, "Partial-exit state", text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(stateTable, 1, 0, directionLabel, text_color = color.white, bgcolor = color.new(color.blue, 45))
+    table.cell(stateTable, 0, 1, "Percentage basis")
+    table.cell(stateTable, 1, 1, quantityBasis)
+    table.cell(stateTable, 0, 2, "Closed bars in cycle")
+    table.cell(stateTable, 1, 2, str.tostring(barsInCycle))
+    table.cell(stateTable, 0, 3, "Next tier")
+    table.cell(stateTable, 1, 3, nextTier == 0 ? "Complete" : str.tostring(nextTier))
+    table.cell(stateTable, 0, 4, "Initial quantity")
+    table.cell(stateTable, 1, 4, str.tostring(initialQuantity))
+    table.cell(stateTable, 0, 5, "Remaining quantity")
+    table.cell(stateTable, 1, 5, str.tostring(remainingQuantity))
+    table.cell(stateTable, 0, 6, "Last contract")
+    table.cell(stateTable, 1, 6, lastContract)
+
+if barstate.islast and not showStateTable
+    table.clear(stateTable, 0, 0, 1, 6)
