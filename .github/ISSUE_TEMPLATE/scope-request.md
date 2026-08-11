@@ -10,6 +10,9 @@ assignees: ""
 This issue is public. Do not paste private source code, credentials, API keys,
 broker tokens, customer data, or proprietary strategy rules. A scope request
 is not an order and does not imply a performance result.
+
+Build a non-public first brief locally in your browser before posting:
+https://stratcorealpha.com/tools/trading-bot-scope-builder
 -->
 
 ## Goal

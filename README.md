@@ -142,7 +142,9 @@ outside this proof.
 ## Request a bounded scope check
 
 If you need help with an authorized Pine Script or TradingView timing problem,
-[open a scope request](https://github.com/arnjesix/stratcorealpha-pine-portfolio/issues/new?template=scope-request.md).
+[build a private local brief](https://stratcorealpha.com/tools/trading-bot-scope-builder)
+and then [open a public scope request](https://github.com/arnjesix/stratcorealpha-pine-portfolio/issues/new?template=scope-request.md)
+only if its contents are non-confidential.
 Describe expected behavior and acceptance examples only. Do not post private
 source code, credentials, broker tokens or proprietary strategy rules in a
 public issue.
