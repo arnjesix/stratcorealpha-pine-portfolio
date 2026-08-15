@@ -1,5 +1,7 @@
 # StratCoreAlpha Pine Script portfolio
 
+[![tests](https://github.com/arnjesix/stratcorealpha-pine-portfolio/actions/workflows/test.yml/badge.svg)](https://github.com/arnjesix/stratcorealpha-pine-portfolio/actions/workflows/test.yml)
+
 Public, source-level proof for deterministic TradingView engineering.
 
 ## Need a Pine Script fix or conversion?
