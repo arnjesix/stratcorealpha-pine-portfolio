@@ -2,6 +2,18 @@
 
 Public, source-level proof for deterministic TradingView engineering.
 
+## Need a Pine Script fix or conversion?
+
+I take on bounded Pine Script v6 debugging, indicator and alert builds,
+authorized Pine-to-MQL4/MQL5 conversions, and webhook-contract diagnosis.
+
+- [Start with the private scope builder](https://stratcorealpha.com/tools/trading-bot-scope-builder)
+- [Send confidential requirements directly](https://stratcorealpha.com/diagnostic)
+- [Open a public, non-confidential scope request](https://github.com/arnjesix/stratcorealpha-pine-portfolio/issues/new?template=scope-request.yml)
+
+Please do not put private source code, credentials, broker tokens or proprietary
+strategy rules in a public GitHub issue.
+
 ## Partial Exit State Inspector
 
 `partial_exit_state_inspector.pine` is a Pine Script v6 diagnostic for a common
