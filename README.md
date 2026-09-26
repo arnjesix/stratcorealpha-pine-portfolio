@@ -1,16 +1,20 @@
 # StratCoreAlpha Pine Script portfolio
 
+![StratCoreAlpha: Know before you risk. Historical simulation, not a forecast.](docs/brand/github-banner.png)
+
 [![tests](https://github.com/arnjesix/stratcorealpha-pine-portfolio/actions/workflows/test.yml/badge.svg)](https://github.com/arnjesix/stratcorealpha-pine-portfolio/actions/workflows/test.yml)
 
-Public, source-level proof for deterministic TradingView engineering.
+Know before you risk. I use source-level tests to show what a TradingView
+signal does at bar close, on reload and across a higher timeframe. These
+examples explain software behaviour; they are not a trading edge or a forecast.
 
 ## Need a Pine Script fix or conversion?
 
 I take on bounded Pine Script v6 debugging, indicator and alert builds,
 authorized Pine-to-MQL4/MQL5 conversions, and webhook-contract diagnosis.
 
-- [Start with the private scope builder](https://stratcorealpha.com/tools/trading-bot-scope-builder)
-- [Send confidential requirements directly](https://stratcorealpha.com/diagnostic)
+- [Start with the private scope builder](https://stratcorealpha.com/tools/trading-bot-scope-builder?ref=github-pine&intent=LM0)
+- [Send confidential requirements directly](https://stratcorealpha.com/diagnostic?ref=github-pine&intent=diagnostic)
 - [Open a public, non-confidential scope request](https://github.com/arnjesix/stratcorealpha-pine-portfolio/issues/new?template=scope-request.yml)
 
 Please do not put private source code, credentials, broker tokens or proprietary
@@ -172,7 +176,7 @@ outside this proof.
 ## Request a bounded scope check
 
 If you need help with an authorized Pine Script or TradingView timing problem,
-[build a private local brief](https://stratcorealpha.com/tools/trading-bot-scope-builder)
+[build a private local brief](https://stratcorealpha.com/tools/trading-bot-scope-builder?ref=github-pine&intent=LM0)
 and then [open a public scope request](https://github.com/arnjesix/stratcorealpha-pine-portfolio/issues/new?template=scope-request.yml)
 only if its contents are non-confidential.
 Describe expected behavior and acceptance examples only. Do not post private
@@ -188,7 +192,7 @@ only.
 
 ## Contact
 
-- Website: <https://stratcorealpha.com>
+- Website: <https://stratcorealpha.com/rule-check?ref=github-pine&intent=rule-check>
 - MQL5 public tools: <https://www.mql5.com/en/users/stratcorealpha>
 
 Only buyer-owned, authorized, or public source is accepted for modification.
