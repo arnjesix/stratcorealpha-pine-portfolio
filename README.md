@@ -20,6 +20,18 @@ authorized Pine-to-MQL4/MQL5 conversions, and webhook-contract diagnosis.
 Please do not put private source code, credentials, broker tokens or proprietary
 strategy rules in a public GitHub issue.
 
+## Pine versus MT5: full-August signal check
+
+I compared an owned SMA(3)/SMA(5) completed-bar rule on TradingView
+OANDA:EURUSD H1 and HolaPrime MT5 EURUSD H1 for all 507 shared August 2026
+bars. Signal states agreed on 491 bars; [all 16 differences have individual
+reasons](https://github.com/arnjesix/stratcorealpha-mql5-portfolio/blob/main/assets/parity/m179/M179_signal_discrepancies_202608.csv),
+including different feed candles. The [source, observed exports and
+reproduction script](https://github.com/arnjesix/stratcorealpha-mql5-portfolio/tree/main/assets/parity/m179)
+and the [public case with overlay and limits](https://stratcorealpha.com/tested/pine-mt5-signal-parity?ref=github-pine&intent=proof)
+are available to inspect. This compares signals only, not orders, returns or
+conversion quality for another rule.
+
 ## Partial Exit State Inspector
 
 `partial_exit_state_inspector.pine` is a Pine Script v6 diagnostic for a common
